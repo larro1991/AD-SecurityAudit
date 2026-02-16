@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head><title>AD Security Audit</title>
+<style>
+    body { font-family: Segoe UI, Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h1 { color: #2c3e50; border-bottom: 3px solid #e74c3c; padding-bottom: 10px; }
+    h2 { color: #34495e; margin-top: 30px; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+    .meta { color: #7f8c8d; margin-bottom: 20px; }
+    .dashboard { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+    .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 180px; text-align: center; }
+    .card .number { font-size: 36px; font-weight: bold; }
+    .card .label { color: #7f8c8d; font-size: 12px; margin-top: 5px; }
+    .card.warning .number { color: #e67e22; }
+    .card.danger .number { color: #e74c3c; }
+    .card.ok .number { color: #27ae60; }
+    table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    th { background: #2c3e50; color: #fff; padding: 10px 8px; text-align: left; font-size: 11px; }
+    td { padding: 8px; border-bottom: 1px solid #ecf0f1; font-size: 11px; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    tr:hover { background: #eaf2f8; }
+    .flag { color: #e74c3c; font-weight: bold; }
+</style></head>
+<body>
+    <h1>Active Directory Security Audit</h1>
+    <div class="meta">Domain: contoso.com | Generated: 2026-02-15 08:00 | Inactive threshold: 90 days</div>
+
+    <div class="dashboard">
+        <div class="card danger"><div class="number">47</div><div class="label">Stale Users</div></div>
+        <div class="card warning"><div class="number">23</div><div class="label">Stale Computers</div></div>
+        <div class="card warning"><div class="number">18</div><div class="label">Privileged Accounts</div></div>
+        <div class="card danger"><div class="number">12</div><div class="label">Unexpected Local Admins</div></div>
+    </div>
+
+    <h2>Stale User Accounts (47)</h2>
+    <table>
+        <tr><th>Name</th><th>SAMAccountName</th><th>Last Logon</th><th>Days Stale</th><th>Department</th><th>DN</th></tr>
+        <tr><td>Williams, Mark</td><td>mwilliams</td><td>2025-06-14</td><td>246</td><td>Sales</td><td>OU=Users,OU=Sales,DC=contoso,DC=com</td></tr>
+        <tr><td>Anderson, Kelly</td><td>kanderson</td><td>2025-07-22</td><td>208</td><td>Marketing</td><td>OU=Users,OU=Marketing,DC=contoso,DC=com</td></tr>
+        <tr><td>Thompson, Eric</td><td>ethompson</td><td>2025-08-10</td><td>189</td><td>Engineering</td><td>OU=Users,OU=Engineering,DC=contoso,DC=com</td></tr>
+        <tr><td>Martinez, Carlos</td><td>cmartinez</td><td>2025-08-30</td><td>169</td><td>Operations</td><td>OU=Users,OU=Operations,DC=contoso,DC=com</td></tr>
+        <tr><td>Davis, Rachel</td><td>rdavis</td><td>2025-09-15</td><td>153</td><td>Finance</td><td>OU=Users,OU=Finance,DC=contoso,DC=com</td></tr>
+        <tr><td>Brown, Tyler</td><td>tbrown</td><td>2025-10-01</td><td>137</td><td>HR</td><td>OU=Users,OU=HR,DC=contoso,DC=com</td></tr>
+        <tr><td>Taylor, Nicole</td><td>ntaylor</td><td>2025-10-20</td><td>118</td><td>Legal</td><td>OU=Users,OU=Legal,DC=contoso,DC=com</td></tr>
+        <tr><td>Jackson, Steve</td><td>sjackson</td><td>2025-11-05</td><td>102</td><td>IT</td><td>OU=Users,OU=IT,DC=contoso,DC=com</td></tr>
+    </table>
+
+    <h2>Stale Computer Accounts (23)</h2>
+    <table>
+        <tr><th>Name</th><th>Last Logon</th><th>Days Stale</th><th>Operating System</th></tr>
+        <tr><td>WS-SALES-014</td><td>2025-04-12</td><td>309</td><td>Windows 10 Enterprise</td></tr>
+        <tr><td>WS-MKT-008</td><td>2025-05-20</td><td>271</td><td>Windows 10 Enterprise</td></tr>
+        <tr><td>PRINT-SRV-02</td><td>2025-06-30</td><td>230</td><td>Windows Server 2016 Standard</td></tr>
+        <tr><td>WS-FIN-022</td><td>2025-07-18</td><td>212</td><td>Windows 10 Pro</td></tr>
+        <tr><td>WS-ENG-031</td><td>2025-08-25</td><td>174</td><td>Windows 11 Enterprise</td></tr>
+    </table>
+
+    <h2>Privileged Group Membership</h2>
+    <table>
+        <tr><th>Group</th><th>Members</th><th>Member Details</th></tr>
+        <tr><td>Domain Admins</td><td>6</td><td>admin.lr<br>admin.mc<br>admin.jw<br>svc.backup <span class="flag">[PasswordNeverExpires; PossibleServiceAccount]</span><br>admin.sw<br>ethompson <span class="flag">[Inactive]</span></td></tr>
+        <tr><td>Enterprise Admins</td><td>2</td><td>admin.lr<br>admin.mc</td></tr>
+        <tr><td>Schema Admins</td><td>1</td><td>admin.lr</td></tr>
+        <tr><td>Administrators</td><td>4</td><td>admin.lr<br>admin.mc<br>Domain Admins <span class="flag">[NestedGroup]</span><br>Enterprise Admins <span class="flag">[NestedGroup]</span></td></tr>
+        <tr><td>Account Operators</td><td>3</td><td>helpdesk1<br>helpdesk2<br>svc.provisioning <span class="flag">[PasswordNeverExpires; PossibleServiceAccount]</span></td></tr>
+        <tr><td>Backup Operators</td><td>2</td><td>svc.backup <span class="flag">[PasswordNeverExpires; PossibleServiceAccount]</span><br>admin.jw</td></tr>
+    </table>
+</body>
+</html>
