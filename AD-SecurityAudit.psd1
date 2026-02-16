@@ -25,7 +25,7 @@
     PrivateData = @{
         PSData = @{
             Tags       = @('ActiveDirectory', 'Security', 'Audit', 'Compliance', 'HIPAA', 'SOC2')
-            ProjectUri = 'https://github.com/yourGitHub/AD-SecurityAudit'
+            ProjectUri = 'https://github.com/larro1991/AD-SecurityAudit'
         }
     }
 }

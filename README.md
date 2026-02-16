@@ -1,41 +1,66 @@
 # AD-SecurityAudit
 
-PowerShell module for Active Directory security and compliance auditing. Generates HTML dashboard reports suitable for SOC2, HIPAA, and cyber insurance evidence.
+PowerShell module for Active Directory security auditing. Generates HTML dashboard reports covering stale accounts, privileged group membership, local admin sprawl, and orphaned SIDs.
 
-## What It Does
+Built for compliance evidence (SOC2, HIPAA, NIST, cyber insurance) and routine security hygiene in enterprise AD environments.
+
+## The Problem
+
+Every compliance audit asks the same questions: Who has Domain Admin? Are there stale accounts? Who's a local admin on your servers? Most teams answer these manually in ADUC or with one-off scripts that nobody maintains.
+
+## What This Module Does
 
 | Function | Purpose |
 |----------|---------|
-| `Invoke-ADSecurityAudit` | Run all checks and generate a consolidated HTML dashboard |
-| `Get-StaleADObjects` | Find inactive user and computer accounts |
-| `Get-LocalAdminAudit` | Audit local admin group membership across domain computers |
-| `Get-OrphanedSIDs` | Detect (and optionally remove) orphaned SIDs in file/folder ACLs |
-| `Get-PrivilegedGroupReport` | Review membership of high-privilege AD groups with risk flags |
+| `Invoke-ADSecurityAudit` | Run all checks, generate a consolidated HTML dashboard |
+| `Get-StaleADObjects` | Find inactive users and computers beyond a configurable threshold |
+| `Get-LocalAdminAudit` | Audit local admin group membership across domain computers via CIM |
+| `Get-OrphanedSIDs` | Scan file/folder ACLs for orphaned SIDs (with optional removal) |
+| `Get-PrivilegedGroupReport` | Review Domain Admins, Enterprise Admins, etc. with risk flags |
 
 ## Quick Start
 
 ```powershell
-# Import the module
 Import-Module .\AD-SecurityAudit.psd1
 
-# Run a full audit with HTML dashboard
+# Full audit with HTML dashboard
 Invoke-ADSecurityAudit
 
-# Run just the stale account check
-Get-StaleADObjects -DaysInactive 60
+# Stale accounts (custom threshold)
+Get-StaleADObjects -DaysInactive 60 -ObjectType Both
 
-# Audit local admins on specific servers
-Get-LocalAdminAudit -ComputerName "SERVER01","SERVER02"
+# Local admin audit on specific servers
+Get-LocalAdminAudit -ComputerName "SQL01","DC01" -ExpectedAdmins @("CONTOSO\Domain Admins","CONTOSO\admin.lr")
 
-# Scan a file share for orphaned SIDs
-Get-OrphanedSIDs -Path "\\fileserver\shared"
-
-# Remove orphaned SIDs (with preview)
-Get-OrphanedSIDs -Path "\\fileserver\shared" -RemoveOrphans -WhatIf
+# Scan a share for orphaned SIDs (preview mode)
+Get-OrphanedSIDs -Path "\\fileserver\departments" -RemoveOrphans -WhatIf
 
 # Privileged group review
-Get-PrivilegedGroupReport -AdditionalGroups "SQL-Admins"
+Get-PrivilegedGroupReport | Format-Table Group, Members, MemberDetails -Wrap
 ```
+
+## Example Output
+
+**Stale Accounts:**
+```
+Name              SAMAccountName  LastLogon   DaysStale  Department  ObjectType
+----              --------------  ---------   ---------  ----------  ----------
+Williams, Mark    mwilliams       2025-06-14  246        Sales       User
+WS-SALES-014                     2025-04-12  309                    Computer
+```
+
+**Privileged Groups:**
+```
+Group            Members  MemberDetails
+-----            -------  -------------
+Domain Admins    6        admin.lr, admin.mc, admin.jw, svc.backup [PasswordNeverExpires],
+                          admin.sw, ethompson [Inactive]
+Enterprise Admins 2       admin.lr, admin.mc
+```
+
+**HTML Dashboard:**
+
+See [`Samples/sample-report.html`](Samples/sample-report.html) for the full dashboard output with color-coded severity cards.
 
 ## Installation
 
@@ -45,21 +70,45 @@ Copy-Item -Path .\AD-SecurityAudit -Destination "$env:USERPROFILE\Documents\Powe
 
 ## Requirements
 
-- PowerShell 5.1 or later
+- PowerShell 5.1+
 - ActiveDirectory module (RSAT)
-- Network access to target computers (for local admin audit)
+- CIM/WinRM access to target computers (for local admin audit)
 - Read access to file shares (for orphaned SID scan)
 
-## Sample Report
+## Design Decisions
 
-The `Invoke-ADSecurityAudit` command produces an HTML dashboard with:
-- Summary cards showing counts at a glance
-- Stale user and computer tables with days-since-logon
-- Privileged group membership with risk flags (inactive accounts, password-never-expires, service accounts)
-- Color-coded severity indicators
+- **CIM with ADSI fallback** -- local admin audit uses CIM (WinRM) as primary method. If CIM fails (older OS, firewall), falls back to ADSI. Both methods logged.
+- **Risk flagging** -- privileged group report flags: `PasswordNeverExpires`, `Inactive`, `NeverLoggedIn`, `PossibleServiceAccount`, `NestedGroup`. These are the findings auditors look for.
+- **-WhatIf on orphaned SID removal** -- scanning is safe, removal requires explicit `-RemoveOrphans` flag and supports `-WhatIf` preview.
+- **OU exclusion** -- stale object search supports `-ExcludeOU` for service accounts and other known exceptions.
+- **Expected admin comparison** -- local admin audit accepts `-ExpectedAdmins` so findings only show unexpected members.
+
+## Project Structure
+
+```
+AD-SecurityAudit/
+├── AD-SecurityAudit.psd1              # Module manifest
+├── AD-SecurityAudit.psm1              # Root module
+├── Public/
+│   ├── Invoke-ADSecurityAudit.ps1     # Orchestrator
+│   ├── Get-StaleADObjects.ps1         # Inactive account detection
+│   ├── Get-LocalAdminAudit.ps1        # Local admin membership audit
+│   ├── Get-OrphanedSIDs.ps1           # Orphaned SID scanner
+│   └── Get-PrivilegedGroupReport.ps1  # Privileged group reviewer
+├── Private/
+│   └── _New-SecurityAuditHtml.ps1     # Dashboard HTML generator
+├── Tests/
+│   └── AD-SecurityAudit.Tests.ps1     # Pester tests
+└── Samples/
+    └── sample-report.html             # Example dashboard output
+```
 
 ## Running Tests
 
 ```powershell
-Invoke-Pester .\Tests\
+Invoke-Pester .\Tests\ -Output Detailed
 ```
+
+## License
+
+MIT
